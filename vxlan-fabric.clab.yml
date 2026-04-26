@@ -1,0 +1,45 @@
+name: vxlan-fabric
+
+topology:
+  defaults:
+    env:
+      QEMU_MEMORY: 6144
+      QEMU_SMP: 2
+
+  nodes:
+    spine1:
+      kind: cisco_n9kv
+      image: vrnetlab/cisco_n9kv:9300-10.5.5
+      startup-config: saved-configs/spine1.cfg
+    spine2:
+      kind: cisco_n9kv
+      image: vrnetlab/cisco_n9kv:9300-10.5.5
+      startup-config: saved-configs/spine2.cfg
+    leaf1:
+      kind: cisco_n9kv
+      image: vrnetlab/cisco_n9kv:9300-10.5.5
+      startup-config: saved-configs/leaf1.cfg
+    leaf2:
+      kind: cisco_n9kv
+      image: vrnetlab/cisco_n9kv:9300-10.5.5
+      startup-config: saved-configs/leaf2.cfg
+    host1:
+      kind: linux
+      image: alpine:latest
+      exec:
+        - ip addr add 192.168.10.1/24 dev eth1
+        - ip link set eth1 up
+    host2:
+      kind: linux
+      image: alpine:latest
+      exec:
+        - ip addr add 192.168.10.2/24 dev eth1
+        - ip link set eth1 up
+
+  links:
+    - endpoints: ["leaf1:eth1", "spine1:eth1"]
+    - endpoints: ["leaf1:eth2", "spine2:eth1"]
+    - endpoints: ["leaf2:eth1", "spine1:eth2"]
+    - endpoints: ["leaf2:eth2", "spine2:eth2"]
+    - endpoints: ["host1:eth1", "leaf1:eth3"]
+    - endpoints: ["host2:eth1", "leaf2:eth3"]
