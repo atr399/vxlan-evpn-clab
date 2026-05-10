@@ -33,8 +33,21 @@ topology:
       kind: linux
       image: alpine:latest
       exec:
-        - ip addr add 192.168.10.2/24 dev eth1
+        - ip addr flush dev eth1
+        - ip addr add 10.10.20.20/24 dev eth1
         - ip link set eth1 up
+        - ip route add default via 10.10.20.1
+    ext-rtr:
+      kind: linux
+      image: quay.io/frrouting/frr:9.1.0
+      exec:
+        - ip addr add 10.99.99.2/30 dev eth1
+        - ip link set eth1 up
+        - ip link add name lo99 type dummy
+        - ip addr add 10.99.99.99/32 dev lo99
+        - ip link set lo99 up
+        - sh -c 'sed -i "s/^bgpd=no/bgpd=yes/" /etc/frr/daemons; /usr/lib/frr/frrinit.sh restart'  
+
 
   links:
     - endpoints: ["leaf1:eth1", "spine1:eth1"]
@@ -43,3 +56,4 @@ topology:
     - endpoints: ["leaf2:eth2", "spine2:eth2"]
     - endpoints: ["host1:eth1", "leaf1:eth3"]
     - endpoints: ["host2:eth1", "leaf2:eth3"]
+    - endpoints: ["leaf2:eth4", "ext-rtr:eth1"]
